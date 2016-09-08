@@ -7,12 +7,23 @@ backBuffer.height = frontBuffer.height;
 var backCtx = backBuffer.getContext('2d');
 var oldTime = performance.now();
 
-var frameCounter = 0;
+var moveTimeCounter = 0;
+var updatePeriod = 100;
+var bodSize = 100;
+var speed = 15;
+
+var oneTrueFood = new food();
+
+function food() {
+	this.img = new Image();
+	this.img.src = 'snakebod.svg';
+	this.position = new position(Math.floor(Math.random() * backBuffer.width), Math.floor(Math.random() * backBuffer.height));
+}
 
 function snakeLink(direction,position,img,prev,next) {
 	this.direction = direction;
 	this.position = position;
-	this.img = new Image(50,50);
+	this.img = new Image();
 	this.img.src = img;
 	this.prev = prev;
 	this.next = next;
@@ -32,7 +43,7 @@ function position(x, y) {
 
 var firstNode = new snakeLink(
 	new direction(false,true,false,false),
-	new position(30,30),
+	new position(200,200),
 	'snakebod.svg',
 	null,
 	null
@@ -126,22 +137,15 @@ function update(elapsedTime) {
 	// TODO: Spawn an apple periodically
 	// TODO: Grow the snake periodically
 	// TODO: Move the snake
-	var snakeNode = snake.tail;
-	while(snakeNode.prev != null) {
-		moveSnakeNode(snakeNode);
-		if(frameCounter == 10) {
-			copyDirection(snakeNode.direction,snakeNode.prev.direction);
-		}
-		snakeNode = snakeNode.prev;
-	}
-	if(frameCounter == 10) {
-		if(checkInput(input)) copyDirection(snake.head.direction,input);
-		frameCounter = 0;
-	}
-	else {
-		frameCounter++;
-	}
-	moveSnakeNode(snake.head);
+
+	
+	if(checkInput(input)) copyDirection(snake.head.direction, input);
+	
+	moveTimeCounter += elapsedTime;
+	if(moveTimeCounter > updatePeriod){ 
+		moveSnakeHead();
+		moveTimeCounter = 0;
+   	}	
 
 	 // TODO: Determine if the snake has moved out-of-bounds (offscreen)
 	// TODO: Determine if the snake has eaten an apple
@@ -201,16 +205,22 @@ function checkInput(inputDirection) {
 	return false;
 }
 
-function moveSnakeNode(snakeNode) {
-	if(snakeNode.direction.up) snakeNode.position.y -= 1;
-	else if (snakeNode.direction.down) snakeNode.position.y += 1;
-	else if (snakeNode.direction.left) snakeNode.position.x -= 1;
-	else if (snakeNode.direction.right) snakeNode.position.x += 1;
+function moveSnakeHead() {
+	var snakePos = copyObject(new position(0,0), snake.head.position);
+
+	if(snake.head.direction.up) snake.head.position.y -= speed;
+	else if (snake.head.direction.down) snake.head.position.y += speed;
+	else if (snake.head.direction.left) snake.head.position.x -= speed;
+	else if (snake.head.direction.right) snake.head.position.x += speed;
 	else console.log('movement error');
+
+	moveSnake(snakePos, snake.head.next);
 }
 
 function moveSnake(pos, snakeNode) {
-	snakeNode.pos
+	if (snakeNode == null) return;	
+	moveSnake(snakeNode.position, snakeNode.next);
+	copyObject(snakeNode.position, pos);
 }
 
 	/**
@@ -222,6 +232,7 @@ function moveSnake(pos, snakeNode) {
 function render(elapsedTime) {
 	backCtx.clearRect(0, 0, backBuffer.width, backBuffer.height);
 	var snakeNode = snake.head;
+	backCtx.drawImage(oneTrueFood.img, oneTrueFood.position.x, oneTrueFood.position.y);
 	while(snakeNode != null) {
 		backCtx.drawImage(snakeNode.img, snakeNode.position.x, snakeNode.position.y);
 		snakeNode = snakeNode.next;
