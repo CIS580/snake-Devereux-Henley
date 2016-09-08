@@ -9,14 +9,16 @@ var oldTime = performance.now();
 
 var moveTimeCounter = 0;
 var updatePeriod = 100;
-var bodSize = 100;
+var bodSize = 15;
+var foodSize = 20;
 var speed = 15;
+var score = 0;
 
-var oneTrueFood = new food();
+var foodOnScreen = new food();
 
 function food() {
 	this.img = new Image();
-	this.img.src = 'snakebod.svg';
+	this.img.src = 'food.svg';
 	this.position = new position(Math.floor(Math.random() * backBuffer.width), Math.floor(Math.random() * backBuffer.height));
 }
 
@@ -54,7 +56,7 @@ var snake = {
 	length: 1
 }
 
-for(i=0;i<10;i++){appendNewTail();}
+for(i=0;i<4;i++){appendNewTail();}
 
 var input = new direction(false,false,false,false);
 
@@ -138,7 +140,12 @@ function update(elapsedTime) {
 	// TODO: Grow the snake periodically
 	// TODO: Move the snake
 
-	
+	if(checkCollision(snake.head, foodOnScreen.position.y, foodOnScreen.position.y + foodSize, foodOnScreen.position.x, foodOnScreen.position.x + foodSize)) {
+		foodOnScreen = new food();
+		appendNewTail();
+		score += 1;
+	}
+
 	if(checkInput(input)) copyDirection(snake.head.direction, input);
 	
 	moveTimeCounter += elapsedTime;
@@ -152,6 +159,20 @@ function update(elapsedTime) {
 	// TODO: Determine if the snake has eaten its tail
 	// TODO: [Extra Credit] Determine if the snake has run into an obstacle
 
+}
+
+
+function checkCollision(snakeNode, topY, botY, leftX, rightX) {
+	var snakeBot = snakeNode.position.y + bodSize;
+	var snakeRight = snakeNode.position.x + bodSize;
+
+	if((topY <= snakeNode.position.y && snakeNode.position.y <= botY) && (leftX <= snakeNode.position.x && snakeNode.position.x <= rightX)) {
+		return true;
+	}
+	else if ((topY <= snakeBot && snakeBot <= botY) && (leftX <= snakeRight && snakeRight <= rightX)) {
+		return true;
+	}
+	else return false;
 }
 
 function appendNewTail() {
@@ -232,7 +253,7 @@ function moveSnake(pos, snakeNode) {
 function render(elapsedTime) {
 	backCtx.clearRect(0, 0, backBuffer.width, backBuffer.height);
 	var snakeNode = snake.head;
-	backCtx.drawImage(oneTrueFood.img, oneTrueFood.position.x, oneTrueFood.position.y);
+	backCtx.drawImage(foodOnScreen.img, foodOnScreen.position.x, foodOnScreen.position.y);
 	while(snakeNode != null) {
 		backCtx.drawImage(snakeNode.img, snakeNode.position.x, snakeNode.position.y);
 		snakeNode = snakeNode.next;
