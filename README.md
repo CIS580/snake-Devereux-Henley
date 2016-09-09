@@ -1,3 +1,5 @@
+v. 0.1.0
+
 # Snake Game
 An implementation of the classic [Snake game](https://en.wikipedia.org/wiki/Snake_(video_game)) in HTML5,
 created for the Fall 2016 class of CIS 580 at Kansas State University.
