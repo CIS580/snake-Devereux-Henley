@@ -7,28 +7,36 @@ backBuffer.height = frontBuffer.height;
 var backCtx = backBuffer.getContext('2d');
 var oldTime = performance.now();
 
+var upperBounds = new position(backBuffer.width,backBuffer.height);
+
 var moveTimeCounter = 0;
-var updatePeriod = 100;
-var bodSize = 15;
+var updatePeriod = 60;
+
+var snakeSize = 15;
+var snakeImage = 'snakebod.svg';
+
 var foodSize = 20;
+var foodImage = 'food.svg';
 var speed = 15;
 var score = 0;
 
-var foodOnScreen = new food();
+var foodOnScreen = new food(foodImage, new position(randomizePos(backBuffer.width - foodSize), randomizePos(backBuffer.height - foodSize)), foodSize);
 
-function food() {
+function food(img, pos, size) {
 	this.img = new Image();
-	this.img.src = 'food.svg';
-	this.position = new position(Math.floor(Math.random() * backBuffer.width), Math.floor(Math.random() * backBuffer.height));
+	this.img.src = img;
+	this.position = pos;
+	this.size = size;
 }
 
-function snakeLink(direction,position,img,prev,next) {
+function snakeLink(direction,position,img,prev,next,size) {
 	this.direction = direction;
 	this.position = position;
 	this.img = new Image();
 	this.img.src = img;
 	this.prev = prev;
 	this.next = next;
+	this.size = size;
 }
 
 function direction(up, down, left, right) {
@@ -48,7 +56,8 @@ var firstNode = new snakeLink(
 	new position(200,200),
 	'snakebod.svg',
 	null,
-	null
+	null,
+	snakeSize
 );
 var snake = {
 	head: firstNode,
@@ -140,10 +149,15 @@ function update(elapsedTime) {
 	// TODO: Grow the snake periodically
 	// TODO: Move the snake
 
-	if(checkCollision(snake.head, foodOnScreen.position.y, foodOnScreen.position.y + foodSize, foodOnScreen.position.x, foodOnScreen.position.x + foodSize)) {
-		foodOnScreen = new food();
+	if(checkCollision(snake.head, foodOnScreen.position, foodOnScreen.size)) {
+		foodOnScreen = new food(foodImage, new position(randomizePos(backBuffer.width - foodSize), randomizePos(backBuffer.height - foodSize)), foodSize);
 		appendNewTail();
 		score += 1;
+		updateScore();
+	}
+
+	if(checkOutOfBounds()) {
+		gameOver();
 	}
 
 	if(checkInput(input)) copyDirection(snake.head.direction, input);
@@ -155,21 +169,34 @@ function update(elapsedTime) {
    	}	
 
 	 // TODO: Determine if the snake has moved out-of-bounds (offscreen)
-	// TODO: Determine if the snake has eaten an apple
 	// TODO: Determine if the snake has eaten its tail
 	// TODO: [Extra Credit] Determine if the snake has run into an obstacle
 
 }
 
 
-function checkCollision(snakeNode, topY, botY, leftX, rightX) {
-	var snakeBot = snakeNode.position.y + bodSize;
-	var snakeRight = snakeNode.position.x + bodSize;
+function checkCollision(snakeNode, pos, offset) {
+	var snakeBot = snakeNode.position.y + snakeNode.size;
+	var snakeRight = snakeNode.position.x + snakeNode.size;
 
-	if((topY <= snakeNode.position.y && snakeNode.position.y <= botY) && (leftX <= snakeNode.position.x && snakeNode.position.x <= rightX)) {
+	var rightX = pos.x + offset;
+	var botY = pos.y + offset;
+
+	if((pos.y <= snakeNode.position.y && snakeNode.position.y <= botY) && (pos.x <= snakeNode.position.x && snakeNode.position.x <= rightX)) {
 		return true;
 	}
-	else if ((topY <= snakeBot && snakeBot <= botY) && (leftX <= snakeRight && snakeRight <= rightX)) {
+	else if ((pos.y <= snakeBot && snakeBot <= botY) && (pos.x <= snakeRight && snakeRight <= rightX)) {
+		return true;
+	}
+	else return false;
+}
+
+function checkOutOfBounds() {
+	if (snake.head.position.x >= upperBounds.x 
+		|| snake.head.position.x <= 0
+		|| snake.head.position.y >= upperBounds.y
+		|| snake.head.position.y <= 0) 
+	{
 		return true;
 	}
 	else return false;
@@ -181,7 +208,8 @@ function appendNewTail() {
 		getNewTailPosition(),
 		'snakebod.svg',
 		snake.tail,
-		null
+		null,
+		snakeSize
 	)
 
 	snake.tail.next = newSnakeNode;
@@ -226,6 +254,10 @@ function checkInput(inputDirection) {
 	return false;
 }
 
+function randomizePos(input) {
+	return Math.floor(Math.random() * input);
+}
+
 function moveSnakeHead() {
 	var snakePos = copyObject(new position(0,0), snake.head.position);
 
@@ -244,6 +276,14 @@ function moveSnake(pos, snakeNode) {
 	copyObject(snakeNode.position, pos);
 }
 
+function updateScore() {
+	document.getElementById('score').innerHTML = 'Score: ' + score;
+}
+
+function gameOver() {
+	console.log('you done badoofed');
+}
+
 	/**
 	 * @function render
 	 * Renders the current game state into a back buffer.
@@ -257,9 +297,7 @@ function render(elapsedTime) {
 	while(snakeNode != null) {
 		backCtx.drawImage(snakeNode.img, snakeNode.position.x, snakeNode.position.y);
 		snakeNode = snakeNode.next;
-	}	
-	// TODO: Draw the game objects into the backBuffer
-
+	}		
 }
 
 /* Launch the game */
