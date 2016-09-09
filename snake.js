@@ -9,7 +9,7 @@ backCtx.font = '20px Arial';
 var oldTime = performance.now();
 
 var upperBounds = new position(backBuffer.width,backBuffer.height);
-var gameDone = false;
+var gameDone;
 
 var moveTimeCounter = 0;
 var updatePeriod = 60;
@@ -18,7 +18,7 @@ var snakeSize = 15;
 var snakeImage = 'snakebod.svg';
 
 var foodSize = 20;
-var foodImage = 'food.svg';
+var foodImage = 'red-apple-clipart.svg';
 var speed = 15;
 var score;
 
@@ -33,6 +33,7 @@ init();
 
 function init() {
 	score = 0;
+	gameDone = false;
 	
 	firstNode = new snakeLink(
 		new direction(false,true,false,false),
@@ -54,7 +55,7 @@ function init() {
 }
 
 function food(img, pos, size) {
-	this.img = new Image();
+	this.img = new Image(foodSize, foodSize);
 	this.img.src = img;
 	this.position = pos;
 	this.size = size;
@@ -205,11 +206,13 @@ function render(elapsedTime) {
 
 	if(gameDone) {
 		backCtx.fillText('GAME OVER. Score is ' + score, backBuffer.width/3, backBuffer.height/2);
+		backCtx.fillText('click anywhere to restart', backBuffer.width/3, backBuffer.height/2 + 50);
+		window.onclick = restart;
 		return;
 	}
 
 	var snakeNode = snake.head;
-	backCtx.drawImage(foodOnScreen.img, foodOnScreen.position.x, foodOnScreen.position.y);
+	backCtx.drawImage(foodOnScreen.img, foodOnScreen.position.x, foodOnScreen.position.y, foodSize, foodSize);
 	while(snakeNode != null) {
 		backCtx.drawImage(snakeNode.img, snakeNode.position.x, snakeNode.position.y);
 		snakeNode = snakeNode.next;
@@ -318,6 +321,13 @@ function moveSnake(pos, snakeNode) {
 	if (snakeNode == null) return;	
 	moveSnake(snakeNode.position, snakeNode.next);
 	copyObject(snakeNode.position, pos);
+}
+
+function restart() {
+	init();
+	window.onclick = function() {
+		return false;
+	}
 }
 
 /* Launch the game */
